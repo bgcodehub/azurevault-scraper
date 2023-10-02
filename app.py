@@ -33,20 +33,21 @@ def get_secret_value(secret_name, vault_name):
     try:
         result = subprocess.check_output(["C:\\Program Files\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az.cmd", "keyvault", "secret", "show", "--name", secret_name, "--vault-name", vault_name])
         data = json.loads(result)
-        
-        # Process the secret value
-        secret_value = data["value"]
-        subvalues = secret_value.split(' ')
-        parsed_subvalues = {}
-        for subvalue in subvalues:
-            subvalue_name, subvalue_data = subvalue.split('=')
-            parsed_subvalues[subvalue_name] = subvalue_data
-        
-        return data["name"], parsed_subvalues
-
+        return data["name"], data["value"]
     except Exception as e:
         print(f"Error retrieving secret {secret_name}: {e}")
         return None, None
+
+def parse_secret(secret_value):
+    """
+    Parse the secret value into a dictionary.
+    """
+    elements = secret_value.split()
+    parsed = {}
+    for element in elements:
+        key, value = element.split('=')
+        parsed[key] = value
+    return parsed
 
 def write_to_csv(secrets, csv_filename):
     """
@@ -55,17 +56,15 @@ def write_to_csv(secrets, csv_filename):
     print(f"Writing secrets to {csv_filename}...")
     try:
         with open(csv_filename, 'w', newline='') as csvfile:
-            fieldnames = ['name'] + [f"subvalue{i}" for i in range(1, 11)]  # Assuming a max of 10 subvalues
+            fieldnames = ['name'] + [f"key{i}" for i in range(1, len(secrets) + 1)]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            
             for secret in secrets:
-                row_data = {'name': secret[0]}
-                for idx, (subvalue_name, subvalue_data) in enumerate(secret[1].items(), start=1):
-                    row_data[f"subvalue{idx}"] = f"{subvalue_name}={subvalue_data}"
+                secret_name, secret_value = secret
+                parsed_secret = parse_secret(secret_value)
+                row_data = {'name': secret_name, **parsed_secret}
                 writer.writerow(row_data)
-                
-        print(f"Successfully wrote {len(secrets)} secrets to {csv_filename}.")
+        print(f"Successfully wrote secrets to {csv_filename}.")
     except Exception as e:
         print(f"Error writing to CSV: {e}")
 
@@ -89,3 +88,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
