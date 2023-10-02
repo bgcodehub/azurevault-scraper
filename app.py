@@ -65,16 +65,17 @@ def main():
     
     secrets_to_export = []
     
-    for secret_name in secret_names:
+       for secret_name in secret_names:
         name, value = get_secret_value(secret_name, VAULT_NAME)
 
         if name and value:
             tenant_code = name.split("-")[0]
-            
             tenant_values = value.split("\n")
             for tenant_value in tenant_values:
-                tenant_value_name = tenant_value.split("=", 1)[0]
-                tenant_value_value = tenant_value.split("=", 1)[1].replace("\"", "")
+                tenant_value_name, tenant_value_value = tenant_value.split("=", 1) if \
+                        "=" in tenant_value else \
+                        (secret_name, tenant_value)
+                #tenant_value_value = tenant_value_value.replace("\"", "")
                 secrets_to_export.append((tenant_code, tenant_value_name, tenant_value_value))
     
     write_to_csv(secrets_to_export, "secrets.csv")
