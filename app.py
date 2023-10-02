@@ -7,8 +7,10 @@ def set_subscription(subscription_id):
     """
     Set a specific subscription using Azure CLI.
     """
+    print(f"Setting subscription {subscription_id}...")
     try:
         subprocess.check_call(["az", "account", "set", "--subscription", subscription_id])
+        print(f"Subscription {subscription_id} set successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error setting subscription {subscription_id}: {e}")
         sys.exit(1)
@@ -17,13 +19,17 @@ def get_secret_names_from_file(filename):
     """
     Read the list of secret names from a file.
     """
+    print(f"Fetching secret names from {filename}...")
     with open(filename, 'r') as file:
-        return [line.strip() for line in file if line.strip()]
+        secrets = [line.strip() for line in file if line.strip()]
+    print(f"Found {len(secrets)} secret names.")
+    return secrets
 
 def get_secret_value(secret_name, vault_name):
     """
     Use Azure CLI to get the value of a specific secret.
     """
+    print(f"Fetching value for secret {secret_name} from vault {vault_name}...")
     try:
         result = subprocess.check_output(["az", "keyvault", "secret", "show", "--name", secret_name, "--vault-name", vault_name])
         data = json.loads(result)
@@ -36,6 +42,7 @@ def write_to_csv(secrets, csv_filename):
     """
     Write secret names and values to a CSV file.
     """
+    print(f"Writing secrets to {csv_filename}...")
     try:
         with open(csv_filename, 'w', newline='') as csvfile:
             fieldnames = ['name', 'value']
@@ -43,6 +50,7 @@ def write_to_csv(secrets, csv_filename):
             writer.writeheader()
             for secret in secrets:
                 writer.writerow({'name': secret[0], 'value': secret[1]})
+        print(f"Successfully wrote {len(secrets)} secrets to {csv_filename}.")
     except Exception as e:
         print(f"Error writing to CSV: {e}")
 
