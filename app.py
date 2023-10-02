@@ -38,17 +38,6 @@ def get_secret_value(secret_name, vault_name):
         print(f"Error retrieving secret {secret_name}: {e}")
         return None, None
 
-def parse_secret(secret_value):
-    """
-    Parse the secret value into a dictionary.
-    """
-    elements = secret_value.split()
-    parsed = {}
-    for element in elements:
-        key, value = element.split('=')
-        parsed[key] = value
-    return parsed
-
 def write_to_csv(secrets, csv_filename):
     """
     Write secret names and values to a CSV file.
@@ -56,15 +45,12 @@ def write_to_csv(secrets, csv_filename):
     print(f"Writing secrets to {csv_filename}...")
     try:
         with open(csv_filename, 'w', newline='') as csvfile:
-            fieldnames = ['name'] + [f"key{i}" for i in range(1, len(secrets) + 1)]
+            fieldnames = ['name', 'value']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for secret in secrets:
-                secret_name, secret_value = secret
-                parsed_secret = parse_secret(secret_value)
-                row_data = {'name': secret_name, **parsed_secret}
-                writer.writerow(row_data)
-        print(f"Successfully wrote secrets to {csv_filename}.")
+                writer.writerow({'name': secret[0], 'value': secret[1]})
+        print(f"Successfully wrote {len(secrets)} secrets to {csv_filename}.")
     except Exception as e:
         print(f"Error writing to CSV: {e}")
 
@@ -88,4 +74,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
