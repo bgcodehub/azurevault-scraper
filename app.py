@@ -45,11 +45,11 @@ def write_to_csv(secrets, csv_filename):
     print(f"Writing secrets to {csv_filename}...")
     try:
         with open(csv_filename, 'w', newline='') as csvfile:
-            fieldnames = ['name', 'value']
+            fieldnames = ['tenant_code', 'name', 'value']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for secret in secrets:
-                writer.writerow({'name': secret[0], 'value': secret[1]})
+                writer.writerow({'tenant_code':secret[0], 'name': secret[1], 'value': secret[2]})
         print(f"Successfully wrote {len(secrets)} secrets to {csv_filename}.")
     except Exception as e:
         print(f"Error writing to CSV: {e}")
@@ -65,10 +65,18 @@ def main():
     
     secrets_to_export = []
     
-    for secret_name in secret_names:
+       for secret_name in secret_names:
         name, value = get_secret_value(secret_name, VAULT_NAME)
+
         if name and value:
-            secrets_to_export.append((name, value))
+            tenant_code = name.split("-")[0]
+            tenant_values = value.split("\n")
+            for tenant_value in tenant_values:
+                tenant_value_name, tenant_value_value = tenant_value.split("=", 1) if \
+                        "=" in tenant_value else \
+                        (secret_name, tenant_value)
+                #tenant_value_value = tenant_value_value.replace("\"", "")
+                secrets_to_export.append((tenant_code, tenant_value_name, tenant_value_value))
     
     write_to_csv(secrets_to_export, "secrets.csv")
 
